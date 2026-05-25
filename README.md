@@ -1,8 +1,6 @@
-# Campfire API
-
-<img src="assets/campfire-api-logo.png" alt="Campfire API logo" width="120" />
-
 ![Campfire API banner](assets/campfire-api-banner.png)
+
+# Campfire API
 
 Campfire API is a professional demo TypeScript Express REST API. It is not the real product; it is a compact sample that demonstrates our preferred backend architecture, validation approach, Swagger/OpenAPI generation, Mongoose datastore pattern, build factory pattern, and AI-agent guidance.
 
