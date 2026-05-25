@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi, type Mocked } from "vi
 
 import { setAuthDriverForTesting } from "../src/middleware/auth.middleware";
 import { errorMiddleware } from "../src/middleware/error.middleware";
+import { CampfireLocation } from "../src/models/campfire.model";
 import { CampfireRouteHandler } from "../src/modules/campfires/campfire.routehandler";
 import type { ICampfireService } from "../src/modules/campfires/campfire.service";
 import type { CampfireResponse } from "../src/modules/campfires/campfire.types";
@@ -14,7 +15,7 @@ const campfireId = "6654f3c7f6c9a3d0dfb3b4b1";
 const validCampfireResponse: CampfireResponse = {
   id: campfireId,
   name: "North Ridge Fire",
-  location: "Pine Hollow Campground",
+  location: CampfireLocation.YOSEMITE,
   logCount: 3,
   status: "unlit",
   createdAt: "2026-05-25T12:00:00.000Z",
@@ -77,7 +78,7 @@ describe("CampfireRouteHandler", () => {
       .set(authHeader)
       .send({
         name: "North Ridge Fire",
-        location: "Pine Hollow Campground",
+        location: CampfireLocation.YOSEMITE,
         logCount: 3,
         status: "unlit",
       })
@@ -86,7 +87,7 @@ describe("CampfireRouteHandler", () => {
     expect(response.body).toEqual(validCampfireResponse);
     expect(service.createCampfire).toHaveBeenCalledWith({
       name: "North Ridge Fire",
-      location: "Pine Hollow Campground",
+      location: CampfireLocation.YOSEMITE,
       logCount: 3,
       status: "unlit",
     });
@@ -100,7 +101,7 @@ describe("CampfireRouteHandler", () => {
       .set(authHeader)
       .send({
         name: "North Ridge Fire",
-        location: "Pine Hollow Campground",
+        location: CampfireLocation.YOSEMITE,
         logCount: -1,
       })
       .expect(400);
@@ -108,6 +109,68 @@ describe("CampfireRouteHandler", () => {
     expect(response.body.error.code).toBe("VALIDATION_FAILED");
     expect(response.body.error.requestId).toBe("test-request-id");
     expect(service.createCampfire).not.toHaveBeenCalled();
+  });
+
+  it("rejects an invalid campfire location before calling the service", async () => {
+    const service = createServiceMock();
+
+    const response = await request(buildTestApp(service))
+      .post("/api/campfires")
+      .set(authHeader)
+      .send({
+        name: "North Ridge Fire",
+        location: "pine-hollow",
+        logCount: 3,
+      })
+      .expect(400);
+
+    expect(response.body.error.code).toBe("VALIDATION_FAILED");
+    expect(service.createCampfire).not.toHaveBeenCalled();
+  });
+
+  it("passes validated location filters to the service", async () => {
+    const service = createServiceMock();
+    service.listCampfires.mockResolvedValue({
+      data: [validCampfireResponse],
+      pagination: {
+        page: 1,
+        limit: 20,
+        total: 1,
+        totalPages: 1,
+      },
+    });
+
+    const response = await request(buildTestApp(service))
+      .get(`/api/campfires?location=${CampfireLocation.YOSEMITE}`)
+      .set(authHeader)
+      .expect(200);
+
+    expect(response.body.data[0].location).toBe(CampfireLocation.YOSEMITE);
+    expect(service.listCampfires).toHaveBeenCalledWith({
+      page: 1,
+      limit: 20,
+      location: CampfireLocation.YOSEMITE,
+    });
+  });
+
+  it("updates a campfire location after validation succeeds", async () => {
+    const service = createServiceMock();
+    const updatedCampfire = {
+      ...validCampfireResponse,
+      location: CampfireLocation.OLYMPIC,
+    };
+    service.updateCampfire.mockResolvedValue(updatedCampfire);
+
+    const response = await request(buildTestApp(service))
+      .patch(`/api/campfires/${campfireId}`)
+      .set(authHeader)
+      .send({ location: CampfireLocation.OLYMPIC })
+      .expect(200);
+
+    expect(response.body.location).toBe(CampfireLocation.OLYMPIC);
+    expect(service.updateCampfire).toHaveBeenCalledWith(campfireId, {
+      location: CampfireLocation.OLYMPIC,
+    });
   });
 
   it("validates response shape before sending JSON", async () => {

@@ -8,7 +8,7 @@ const EnvSchema = z.object({
   LOG_LEVEL: z.string().optional(),
   COGNITO_USER_POOL_ID: z.string().optional().default(""),
   COGNITO_CLIENT_ID: z.string().optional().default(""),
-  AWS_REGION: z.string().optional().default(""),
+  AWS_REGION: z.string().optional().default("us-east-1"),
 });
 
 export const env = EnvSchema.parse(process.env);

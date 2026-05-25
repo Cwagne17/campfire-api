@@ -1,17 +1,22 @@
 import { Types } from "mongoose";
 
-import { CampfireModel, type CampfireRecord, type CampfireStatus } from "../models/campfire.model";
+import {
+  CampfireModel,
+  type CampfireLocation,
+  type CampfireRecord,
+  type CampfireStatus,
+} from "../models/campfire.model";
 
 export interface CreateCampfireRecordInput {
   name: string;
-  location: string;
+  location: CampfireLocation;
   logCount: number;
   status: CampfireStatus;
 }
 
 export interface UpdateCampfireRecordInput {
   name?: string;
-  location?: string;
+  location?: CampfireLocation;
   logCount?: number;
   status?: CampfireStatus;
 }
@@ -20,6 +25,7 @@ export interface ListCampfireRecordsInput {
   page: number;
   limit: number;
   status?: CampfireStatus;
+  location?: CampfireLocation;
 }
 
 export interface ListCampfireRecordsResult {
@@ -46,7 +52,10 @@ export class CampfireDatastore implements ICampfireDatastore {
   }
 
   async findMany(input: ListCampfireRecordsInput): Promise<ListCampfireRecordsResult> {
-    const filter = input.status ? { status: input.status } : {};
+    const filter = {
+      ...(input.status ? { status: input.status } : {}),
+      ...(input.location ? { location: input.location } : {}),
+    };
     const skip = (input.page - 1) * input.limit;
 
     const [records, total] = await Promise.all([

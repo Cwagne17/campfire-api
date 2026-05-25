@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { CampfireLocation } from "../src/models/campfire.model";
 import { openApiDocument } from "../src/openapi";
 
 describe("openApiDocument", () => {
@@ -38,5 +39,14 @@ describe("openApiDocument", () => {
       bearerFormat: "JWT",
     });
     expect(createCampfire?.security).toEqual([{ bearerAuth: [] }]);
+  });
+
+  it("includes the standardized campfire location enum", () => {
+    const locationValues = Object.values(CampfireLocation);
+    const documentJson = JSON.stringify(openApiDocument);
+
+    for (const location of locationValues) {
+      expect(documentJson).toContain(location);
+    }
   });
 });

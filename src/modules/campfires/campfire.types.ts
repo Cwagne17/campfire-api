@@ -1,7 +1,7 @@
 import "zod-openapi";
 import { z } from "zod";
 
-import { CAMPFIRE_STATUSES } from "../../models/campfire.model";
+import { CAMPFIRE_STATUSES, CampfireLocation } from "../../models/campfire.model";
 
 export const CampfireStatusSchema = z.enum(CAMPFIRE_STATUSES).meta({
   id: "CampfireStatus",
@@ -25,9 +25,11 @@ const NameSchema = z.string().trim().min(1).max(100).meta({
   example: "North Ridge Fire",
 });
 
-const LocationSchema = z.string().trim().min(1).max(120).meta({
-  description: "Human-readable outdoor location for the campfire.",
-  example: "Pine Hollow Campground",
+export const CampfireLocationSchema = z.enum(CampfireLocation).meta({
+  id: "CampfireLocation",
+  description:
+    "Standardized national park location for the campfire. Frontends can map this value to a display name.",
+  example: CampfireLocation.YOSEMITE,
 });
 
 const LogCountSchema = z.number().int().min(0).max(10).meta({
@@ -44,7 +46,7 @@ export const CampfireParamsSchema = z
 export const CreateCampfireRequestSchema = z
   .object({
     name: NameSchema,
-    location: LocationSchema,
+    location: CampfireLocationSchema,
     logCount: LogCountSchema.default(0),
     status: CampfireStatusSchema.default("unlit"),
   })
@@ -65,6 +67,7 @@ export const ListCampfiresQuerySchema = z
       example: 20,
     }),
     status: CampfireStatusSchema.optional(),
+    location: CampfireLocationSchema.optional(),
   })
   .strict()
   .meta({
@@ -75,7 +78,7 @@ export const ListCampfiresQuerySchema = z
 export const UpdateCampfireRequestSchema = z
   .object({
     name: NameSchema.optional(),
-    location: LocationSchema.optional(),
+    location: CampfireLocationSchema.optional(),
     status: CampfireStatusSchema.optional(),
   })
   .strict()
@@ -107,14 +110,14 @@ export const CampfireResponseSchema = z
       example: "6654f3c7f6c9a3d0dfb3b4b1",
     }),
     name: NameSchema,
-    location: LocationSchema,
+    location: CampfireLocationSchema,
     logCount: LogCountSchema,
     status: CampfireStatusSchema,
-    createdAt: z.string().datetime().meta({
+    createdAt: z.iso.datetime().meta({
       description: "ISO timestamp when the campfire was created.",
       example: "2026-05-25T12:00:00.000Z",
     }),
-    updatedAt: z.string().datetime().meta({
+    updatedAt: z.iso.datetime().meta({
       description: "ISO timestamp when the campfire was last updated.",
       example: "2026-05-25T12:05:00.000Z",
     }),

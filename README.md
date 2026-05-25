@@ -1,5 +1,9 @@
 # Campfire API
 
+<img src="assets/campfire-api-logo.png" alt="Campfire API logo" width="120" />
+
+![Campfire API banner](assets/campfire-api-banner.png)
+
 Campfire API is a professional demo TypeScript Express REST API. It is not the real product; it is a compact sample that demonstrates our preferred backend architecture, validation approach, Swagger/OpenAPI generation, Mongoose datastore pattern, build factory pattern, and AI-agent guidance.
 
 The demo domain is intentionally simple: a campfire has a log count, and a future Next.js demo app can visualize the fire size based on the number of logs.
@@ -30,6 +34,7 @@ The API keeps HTTP, business logic, persistence, and contracts in separate layer
 ## Folder Structure
 
 ```text
+assets/
 src/
   app.ts
   server.ts
@@ -44,6 +49,27 @@ src/
   types/
 tests/
 ```
+
+The `assets/` folder contains README and demo app visuals, including `campfire-api-banner.png`, `campfire-api-logo.png`, and national park imagery for the standardized locations.
+
+## Standardized Locations
+
+Campfire locations are standardized national park enum values, not arbitrary strings. The API stores these values:
+
+- `yosemite`
+- `yellowstone`
+- `glacier`
+- `zion`
+- `acadia`
+- `olympic`
+
+The Mongoose schema protects persistence with the same allowed values, and Zod request/response schemas validate API contracts before a routehandler calls the service. `GET /api/campfires` also supports optional location filtering:
+
+```sh
+GET /api/campfires?location=yosemite
+```
+
+Frontend apps can map stored enum values to human-readable labels with `CampfireLocationDisplayName`, for example `yosemite` to `Yosemite National Park`.
 
 ## Factory And Injection Pattern
 

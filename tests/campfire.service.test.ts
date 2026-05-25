@@ -2,7 +2,7 @@ import { Types } from "mongoose";
 import { describe, expect, it, vi, type Mocked } from "vitest";
 
 import type { ICampfireDatastore } from "../src/datastores/campfire.datastore";
-import type { CampfireRecord } from "../src/models/campfire.model";
+import { CampfireLocation, type CampfireRecord } from "../src/models/campfire.model";
 import { CampfireService } from "../src/modules/campfires/campfire.service";
 
 const campfireId = "6654f3c7f6c9a3d0dfb3b4b1";
@@ -12,7 +12,7 @@ const createRecord = (overrides: Partial<CampfireRecord> = {}): CampfireRecord =
   ({
     _id: new Types.ObjectId(campfireId),
     name: "North Ridge Fire",
-    location: "Pine Hollow Campground",
+    location: CampfireLocation.YOSEMITE,
     logCount: 3,
     status: "unlit",
     createdAt: now,
@@ -40,7 +40,7 @@ describe("CampfireService", () => {
     expect(result).toEqual({
       id: campfireId,
       name: "North Ridge Fire",
-      location: "Pine Hollow Campground",
+      location: CampfireLocation.YOSEMITE,
       logCount: 3,
       status: "unlit",
       createdAt: "2026-05-25T12:00:00.000Z",
@@ -55,7 +55,7 @@ describe("CampfireService", () => {
     await expect(
       service.createCampfire({
         name: "Trailhead Fire",
-        location: "Maple Grove",
+        location: CampfireLocation.GLACIER,
         logCount: 0,
         status: "burning",
       }),
@@ -75,6 +75,28 @@ describe("CampfireService", () => {
       code: "CAMPFIRE_CONFLICT",
     });
     expect(datastore.updateById).not.toHaveBeenCalled();
+  });
+
+  it("passes location filters to the datastore", async () => {
+    const datastore = createDatastoreMock();
+    datastore.findMany.mockResolvedValue({
+      records: [createRecord({ location: CampfireLocation.ZION })],
+      total: 1,
+    });
+    const service = new CampfireService(datastore);
+
+    const result = await service.listCampfires({
+      page: 1,
+      limit: 20,
+      location: CampfireLocation.ZION,
+    });
+
+    expect(datastore.findMany).toHaveBeenCalledWith({
+      page: 1,
+      limit: 20,
+      location: CampfireLocation.ZION,
+    });
+    expect(result.data[0]?.location).toBe(CampfireLocation.ZION);
   });
 
   it("rejects adding logs to an extinguished campfire", async () => {
